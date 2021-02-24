@@ -1,6 +1,7 @@
 
 const express = require('express')
 const path = require('path')
+const cors = require('cors')
 const compression = require('compression')
 const bodyParser = require('body-parser')
 const basicAuth = require('express-basic-auth')
@@ -10,6 +11,8 @@ const { rebuildBcMaps } = require('./businessLogic')
 const app = express()
 const PORT = 3000
 let lastTransaction = -1
+
+app.use(cors())
 
 // Tell express to use body-parser's JSON parsing
 app.use(bodyParser.json())
