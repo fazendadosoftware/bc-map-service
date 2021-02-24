@@ -74,7 +74,7 @@ const rebuildBcMaps = async transactionSequenceNumber => {
   const bcMaps = await generateBcMaps()
   if (transactionSequenceNumber) bcMaps.transactionSequenceNumber = transactionSequenceNumber
   writeFileSync(`${publicFolder}/bcMaps.json`, JSON.stringify(bcMaps, null, 2))
-  console.log('rebuilt bcMaps.json')
+  console.log(`${new Date().toISOString()} #${transactionSequenceNumber || 0} - updated bcMaps.json`)
 }
 
 authenticator.start()

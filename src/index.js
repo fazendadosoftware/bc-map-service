@@ -13,19 +13,19 @@ let lastTransaction = -1
 
 // Tell express to use body-parser's JSON parsing
 app.use(bodyParser.json())
+
 // GZIP http sent files for performance
 app.use(compression())
 
+// Public folder from where the BC maps will be served
+app.use(express.static(path.join(__dirname, '../public')))
+
 app.use('/hook', basicAuth({ users: { leanix: 'leanix' } }))
 
-// Public folder from where the BC maps will be served
-app.use(express.static(path.join(__dirname, 'build')))
-
-app.post('/hook')
 app.post('/hook', (req, res) => {
   const { body: { type, transactionSequenceNumber, factSheet: { type: fsType } = {} } } = req
   if (type !== 'FactSheetUpdatedEvent' || fsType !== 'BusinessCapability' || lastTransaction >= transactionSequenceNumber) return res.status(200).end()
-  console.log(transactionSequenceNumber, type, fsType)
+  console.log(`${new Date().toISOString()} #${transactionSequenceNumber} - ${type} - ${fsType}`)
   lastTransaction = transactionSequenceNumber
   rebuildBcMaps(transactionSequenceNumber)
   res.status(200).end() // Responding is important
