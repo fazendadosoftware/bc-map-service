@@ -7,6 +7,7 @@ const authenticator = new Authenticator(lxr.instance, lxr.apiToken)
 const graphql = new GraphQLClient(authenticator)
 
 const generateBcMaps = async () => {
+  await authenticator.start()
   const query = `
   {
     allFactSheets(filter: {facetFilters: [{facetKey: "FactSheetTypes", keys: ["BusinessCapability"]}]}, sort: [{key: "level", order: desc}]) {
@@ -66,6 +67,7 @@ const generateBcMaps = async () => {
     }, businessCapabilityIndex)
   const bcMaps = Object.values(businessCapabilityMapIndex)
   const { workspaceId, instance } = authenticator
+  authenticator.stop()
   return { workspaceId, instance, timestamp: new Date().toISOString(), bcMaps }
 }
 
