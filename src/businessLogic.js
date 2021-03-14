@@ -46,6 +46,7 @@ const generateBcMaps = async () => {
 
   const bcMaps = await graphql.executeGraphQL(query)
     .then(({ allFactSheets: { edges } }) => edges.map(({ node }) => unrollChildren(node)))
+    .then(bcMaps => bcMaps.filter(({ published }) => !!published))
 
   const { workspaceId, instance } = authenticator
   return { workspaceId, instance, timestamp: new Date().toISOString(), bcMaps }
