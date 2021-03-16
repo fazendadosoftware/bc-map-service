@@ -38,6 +38,17 @@ const generateBcMaps = async () => {
       console.error(error)
       description = {}
     }
+
+    const { childrenOrder = [] } = description
+    if (childrenOrder.length) {
+      const childIdx = childrenOrder.reduce((accumulator, factSheetId, i) => ({ ...accumulator, [factSheetId]: i }), {})
+      children = children.sort(({ node: { factSheet: { id: A } } }, { node: { factSheet: { id: B } } }) => {
+        const idxA = childIdx[A]
+        const idxB = childIdx[B]
+        return idxA < idxB ? -1 : idxA > idxB ? 1 : 0
+      })
+    }
+
     children = children.map(({ node }) => unrollChildren(node))
     node = { ...(factSheet === null ? node : factSheet), relToParentId: factSheet === null ? null : id, children }
     delete node.description
