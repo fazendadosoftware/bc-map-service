@@ -1,7 +1,11 @@
 const { existsSync, mkdirSync, writeFileSync } = require('fs')
 const { Authenticator, GraphQLClient } = require('leanix-js')
+const fetch = require('node-fetch')
+const FormData = require('form-data')
 const lxr = require('../lxr.json')
 const publicFolder = './public'
+
+const status = { transaction: -1, lastUpdate: null }
 
 const authenticator = new Authenticator(lxr.instance, lxr.apiToken)
 const graphql = new GraphQLClient(authenticator)
@@ -63,12 +67,35 @@ const generateBcMaps = async () => {
   return { workspaceId, instance, timestamp: new Date().toISOString(), bcMaps }
 }
 
-const rebuildBcMaps = async transactionSequenceNumber => {
+const rebuildBcMaps = async (transactionSequenceNumber = 0) => {
+  status.transaction = transactionSequenceNumber
   if (!existsSync(publicFolder)) mkdirSync(publicFolder)
   const bcMaps = await generateBcMaps()
   if (transactionSequenceNumber) bcMaps.transactionSequenceNumber = transactionSequenceNumber
   writeFileSync(`${publicFolder}/bcMaps.json`, JSON.stringify(bcMaps, null, 2))
-  console.log(`${new Date().toISOString()} #${transactionSequenceNumber || 0} - updated bcMaps.json`)
+  const form = new FormData()
+  form.append('file', Buffer.from(JSON.stringify(bcMaps), 'utf-8'), { contentType: 'application/json', name: 'file', filename: 'bcmaps.json' })
+  form.append('folderPath', '/bcmaps')
+  form.append('options', JSON.stringify({ access: 'PUBLIC_INDEXABLE', overwrite: true }))
+  try {
+    if (!lxr.hapikey) throw Error('No hapikey in lxr.json!')
+    const options = { method: 'POST', body: form }
+    const response = await fetch(`https://api.hubapi.com/files/v3/files?hapikey=${lxr.hapikey}`, options)
+    const { ok, status: statusCode } = response
+    const data = await response.json()
+    if (ok && statusCode === 201) {
+      status.ok = true
+      status.url = data.url
+      status.error = null
+      console.log(`${new Date().toISOString()} #${transactionSequenceNumber || 0} - updated bcMaps.json`)
+    } else throw Error(JSON.stringify({ statusCode, ...data }))
+  } catch (error) {
+    console.log(`${new Date().toISOString()} #${transactionSequenceNumber || 0} - error updating bcMaps.json`, error)
+    status.ok = false
+    status.error = error.message
+  } finally {
+    status.lastUpdate = new Date().toISOString()
+  }
 }
 
 authenticator.start()
@@ -79,5 +106,6 @@ module.exports = {
   authenticator,
   graphql,
   generateBcMaps,
-  rebuildBcMaps
+  rebuildBcMaps,
+  getStatus: () => status
 }

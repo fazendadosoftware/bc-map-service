@@ -5,7 +5,7 @@ const cors = require('cors')
 const compression = require('compression')
 const bodyParser = require('body-parser')
 const basicAuth = require('express-basic-auth')
-const { rebuildBcMaps } = require('./businessLogic')
+const { rebuildBcMaps, getStatus } = require('./businessLogic')
 
 // Initialize express and define a port
 const app = express()
@@ -33,6 +33,8 @@ app.post('/hook', (req, res) => {
   rebuildBcMaps(transactionSequenceNumber)
   res.status(200).end() // Responding is important
 })
+
+app.get('/status', (req, res) => res.json(getStatus()))
 
 // Start express on the defined port
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
